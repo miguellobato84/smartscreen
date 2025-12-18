@@ -1,0 +1,6 @@
+{
+  "board": "esp32:esp32:esp32s3",
+  "configuration": "CDCOnBoot=cdc,FlashMode=qio,FlashFreq=80,FlashSize=16M,PartitionScheme=fatfs,PSRAM=opi,DebugLevel=none,UploadSpeed=921600",
+  "port": "/dev/cu.usbmodem1101",
+  "sketch": "DEMO_LVGL.ino"
+}

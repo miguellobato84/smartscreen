@@ -1,4 +1,4 @@
-# Tutorial 1: Initial Setup and First Project
+# está tar
 
 ## 🎯 Objectives
 
@@ -57,26 +57,32 @@ By completing this tutorial, you will have:
 
 1. Go to **Tools > Board > Boards Manager**
 2. Search for **"esp32"** by **Espressif Systems**
-3. Install version **3.0.2** specifically (important)
+3. Install version **3.3.4** or later (3.0.2+ compatible)
 4. Wait for download to finish (may take 5-10 minutes)
 
 ### 2.3 Verify Installation
 
 1. Go to **Tools > Board > esp32**
-2. Look for and select **"ESP32S3 Dev Module"**
+2. Look for and select **"ESP32S3 Dev Module Octal (WROOM2)"**
 3. If it appears, installation was successful
 
 ---
 
-## Step 3: Install USB Driver (if needed)
+## Step 3: Verify USB Connection
+
+### macOS (Recommended)
+
+1. Connect your ESP32-S3 board with USB-C cable
+2. In Arduino IDE, go to **Tools > Port**
+3. You should see a port like: `/dev/cu.usbmodem1101 (ESP32 Family Device)`
+4. Select it
+
+> **Note:** macOS generally recognizes the board automatically. If you don't see a port, try another USB cable.
 
 ### Windows
 - Driver should install automatically
 - If not working, download CH340 or CP2102 driver depending on your board
-
-### macOS
-- Generally no additional driver needed
-- If problems, install from [https://github.com/WCHSoftGroup/ch34xser_macos](https://github.com/WCHSoftGroup/ch34xser_macos)
+- Look for ports like COM3, COM4, etc.
 
 ### Linux
 ```bash
@@ -130,7 +136,7 @@ In **Tools**, set:
 
 | Parameter | Value |
 |-----------|-------|
-| **Board** | ESP32S3 Dev Module |
+| **Board** | ESP32S3 Dev Module Octal (WROOM2) |
 | **USB CDC On Boot** | Enabled |
 | **CPU Frequency** | 240MHz (WiFi) |
 | **Flash Mode** | QIO 80MHz |
@@ -142,6 +148,20 @@ In **Tools**, set:
 | **Port** | Select the COM/USB port that appears |
 
 > **Note:** If you don't see any port, check USB drivers.
+
+### 5.3 Save Configuration (Optional but Recommended)
+
+Arduino IDE 2.x automatically saves these settings, but for project-specific configuration, create a file named `arduino.json` in your sketch folder with:
+
+```json
+{
+  "board": "esp32:esp32:esp32s3",
+  "configuration": "CDCOnBoot=cdc,FlashMode=qio,FlashFreq=80,FlashSize=16M,PartitionScheme=fatfs,PSRAM=opi,DebugLevel=none,UploadSpeed=921600",
+  "port": "/dev/cu.usbmodem1101"
+}
+```
+
+This ensures consistent settings when opening the project later.
 
 ---
 
