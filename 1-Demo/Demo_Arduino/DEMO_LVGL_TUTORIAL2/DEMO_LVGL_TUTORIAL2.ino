@@ -4,6 +4,24 @@
 #include "../DEMO_LVGL/esp_bsp.h"
 #include "../DEMO_LVGL/lv_port.h"
 
+// Optional WiFi/OTA scaffold: safely compile only if credentials exist
+#if __has_include("wifi_credentials.h")
+#include "wifi_credentials.h"
+#define WIFI_ENABLED 1
+#else
+#define WIFI_ENABLED 0
+#endif
+
+#if WIFI_ENABLED
+#include <WiFi.h>
+#if __has_include(<ArduinoOTA.h>)
+#include <ArduinoOTA.h>
+#define OTA_LIB_AVAILABLE 1
+#else
+#define OTA_LIB_AVAILABLE 0
+#endif
+#endif
+
 /**
  * Set the rotation degree:
  *      - 0: 0 degree
@@ -72,6 +90,20 @@ static void tutorial2_create_ui()
     lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_TOP_MID, 0, -10);
 
     lv_obj_add_event_cb(slider, tutorial2_on_slider_changed, LV_EVENT_VALUE_CHANGED, slider_label);
+    // Optional: show local IP if WiFi is enabled
+#if WIFI_ENABLED
+    if (WiFi.isConnected()) {
+        lv_obj_t * ip_label = lv_label_create(scr);
+        IPAddress ip = WiFi.localIP();
+        char buf[64];
+        snprintf(buf, sizeof(buf), "WiFi: %s\nIP: %u.%u.%u.%u",
+                 WIFI_SSID,
+                 (unsigned)ip[0], (unsigned)ip[1], (unsigned)ip[2], (unsigned)ip[3]);
+        lv_label_set_text(ip_label, buf);
+        lv_obj_set_style_text_color(ip_label, lv_color_hex(0x8EE5FF), 0);
+        lv_obj_align(ip_label, LV_ALIGN_TOP_LEFT, 8, 36);
+    }
+#endif
 }
 
 void setup()
@@ -99,6 +131,30 @@ void setup()
     bsp_display_start_with_config(&cfg);
     bsp_display_backlight_on();
 
+    // Optional: Connect WiFi and start OTA if available
+#if WIFI_ENABLED
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    Serial.printf("Connecting to WiFi: %s\n", WIFI_SSID);
+    uint32_t start = millis();
+    while (WiFi.status() != WL_CONNECTED && (millis() - start) < 15000) {
+        delay(250);
+        Serial.print('.');
+    }
+    Serial.println();
+    if (WiFi.isConnected()) {
+        Serial.printf("WiFi connected, IP: %s\n", WiFi.localIP().toString().c_str());
+#if OTA_LIB_AVAILABLE
+        ArduinoOTA.setHostname(OTA_HOSTNAME);
+        ArduinoOTA.setPassword(OTA_PASSWORD);
+        ArduinoOTA.begin();
+        Serial.printf("OTA ready at %s (%s)\n", OTA_HOSTNAME, WiFi.localIP().toString().c_str());
+#endif
+    } else {
+        Serial.println("WiFi connect timeout; continuing without network.");
+    }
+#endif
+
     Serial.println("Create UI");
     bsp_display_lock(0);
     tutorial2_create_ui();
@@ -109,5 +165,9 @@ void setup()
 
 void loop()
 {
-    delay(1000);
+    // Handle OTA when available; otherwise simple idle loop
+#if WIFI_ENABLED && OTA_LIB_AVAILABLE
+    ArduinoOTA.handle();
+#endif
+    delay(50);
 }

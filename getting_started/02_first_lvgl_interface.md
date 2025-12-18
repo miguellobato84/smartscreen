@@ -17,6 +17,11 @@
 - Arduino IDE installed, ESP32 board package configured
 - Board connected via USB-C
 
+Optional (for OTA and on-screen IP):
+
+- Create `wifi_credentials.h` from the example in `1-Demo/Demo_Arduino/DEMO_LVGL_TUTORIAL2/wifi_credentials.h.example`
+- Ensure `wifi_credentials.h` is ignored by git (already configured)
+
 
 ## Steps
 
@@ -44,6 +49,7 @@ The function is invoked during setup after LVGL and the display are initialized.
 2. Open the sketch folder for DEMO_LVGL.
 3. Click "Upload" to compile and flash.
 4. The screen should show the custom UI with interactive button and slider.
+5. If `wifi_credentials.h` is present and WiFi connects, the screen shows SSID and IP.
 
 ### 4) Verify interactions
 
@@ -55,6 +61,8 @@ The function is invoked during setup after LVGL and the display are initialized.
 - If the demo widgets still show, ensure the call to `lv_demo_widgets()` is commented and `tutorial2_create_ui()` is invoked.
 - If the screen is rotated incorrectly, adjust `LVGL_PORT_ROTATION_DEGREE` in DEMO_LVGL.ino.
 - If touch doesn’t respond, verify your board selection and that the demo’s `esp_bsp` files match your hardware variant.
+- If build fails due to missing `wifi_credentials.h`, create it from the `.example` file or skip WiFi by building as-is (the sketch compiles without the file).
+- OTA requires the Arduino `ArduinoOTA` library. If not installed, OTA is skipped automatically.
 
 ## What’s next
 
