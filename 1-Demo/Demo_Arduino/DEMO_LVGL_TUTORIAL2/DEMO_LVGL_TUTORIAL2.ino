@@ -1,8 +1,8 @@
 #include <Arduino.h>
 #include <lvgl.h>
-#include "../DEMO_LVGL/display.h"
-#include "../DEMO_LVGL/esp_bsp.h"
-#include "../DEMO_LVGL/lv_port.h"
+#include "display.h"
+#include "esp_bsp.h"
+#include "lv_port.h"
 
 // Optional WiFi/OTA scaffold: safely compile only if credentials exist
 #if __has_include("wifi_credentials.h")
