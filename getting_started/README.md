@@ -22,11 +22,11 @@ You will learn to:
 
 ---
 
-### 2️⃣ Creating Your First LVGL Interface
+### 2️⃣ [Creating Your First LVGL Interface](02_first_lvgl_interface.md)
 
-**Status:** 🚧 To be created  
+**Status:** ✅ Ready  
 
-Planned content:
+You will learn to:
 - Create basic widgets (buttons, labels)
 - Handle touch events
 - Change styles and colors
