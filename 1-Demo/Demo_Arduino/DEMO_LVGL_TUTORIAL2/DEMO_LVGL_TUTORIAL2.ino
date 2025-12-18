@@ -1,40 +1,116 @@
 #include <Arduino.h>
+#include <WiFi.h>
+#include <ArduinoOTA.h>
 #include <lvgl.h>
 #include "display.h"
 #include "esp_bsp.h"
 #include "lv_port.h"
-
-// Optional WiFi/OTA scaffold: safely compile only if credentials exist
-#if __has_include("wifi_credentials.h")
 #include "wifi_credentials.h"
-#define WIFI_ENABLED 1
-#else
-#define WIFI_ENABLED 0
-#endif
 
-#if WIFI_ENABLED
-#include <WiFi.h>
-#if __has_include(<ArduinoOTA.h>)
-#include <ArduinoOTA.h>
-#define OTA_LIB_AVAILABLE 1
-#else
-#define OTA_LIB_AVAILABLE 0
-#endif
-#endif
-
-/**
- * Set the rotation degree:
- *      - 0: 0 degree
- *      - 90: 90 degree
- *      - 180: 180 degree
- *      - 270: 270 degree
- */
 #define LVGL_PORT_ROTATION_DEGREE (90)
+
+// Fallback values if wifi_credentials.h is missing
+#ifndef WIFI_SSID
+#define WIFI_SSID "YourSSID"
+#endif
+#ifndef WIFI_PASSWORD
+#define WIFI_PASSWORD "YourPassword"
+#endif
+#ifndef OTA_HOSTNAME
+#define OTA_HOSTNAME "esp32-panel"
+#endif
+#ifndef OTA_PASSWORD
+#define OTA_PASSWORD "admin123"
+#endif
 
 // Screen sleep/wake settings
 #define SCREEN_TIMEOUT_MS 30000  // 30 seconds of inactivity
 static uint32_t last_activity_time = 0;
 static bool screen_is_on = true;
+
+// ============================================================================
+// WiFi and OTA Functions
+// ============================================================================
+
+void wifi_ota_setup_wifi(void)
+{
+    Serial.println("Connecting to WiFi...");
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    
+    int attempts = 0;
+    while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+        delay(500);
+        Serial.print(".");
+        attempts++;
+    }
+    
+    Serial.println();
+    if (WiFi.status() == WL_CONNECTED) {
+        Serial.println("✓ WiFi connected");
+        Serial.print("IP: ");
+        Serial.println(WiFi.localIP());
+    } else {
+        Serial.println("✗ WiFi connection failed");
+    }
+}
+
+void wifi_ota_setup_ota(void)
+{
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("✗ WiFi not connected, skipping OTA setup");
+        return;
+    }
+
+    ArduinoOTA.setHostname(OTA_HOSTNAME);
+    ArduinoOTA.setPassword(OTA_PASSWORD);
+    
+    ArduinoOTA.onStart([]() {
+        Serial.println("\n>>> Starting OTA update...");
+    });
+    
+    ArduinoOTA.onEnd([]() {
+        Serial.println("\n>>> Update complete, restarting...");
+    });
+    
+    ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+        Serial.printf(">>> Progress: %u%%\r", (progress / (total / 100)));
+    });
+    
+    ArduinoOTA.onError([](ota_error_t error) {
+        Serial.printf("\n>>> Error[%u]: ", error);
+        if (error == OTA_AUTH_ERROR) {
+            Serial.println("Auth Failed");
+        } else if (error == OTA_BEGIN_ERROR) {
+            Serial.println("Begin Failed");
+        } else if (error == OTA_CONNECT_ERROR) {
+            Serial.println("Connect Failed");
+        } else if (error == OTA_RECEIVE_ERROR) {
+            Serial.println("Receive Failed");
+        } else if (error == OTA_END_ERROR) {
+            Serial.println("End Failed");
+        }
+    });
+    
+    ArduinoOTA.begin();
+    Serial.printf("✓ OTA ready: %s@%s (%s)\n", OTA_HOSTNAME, WiFi.localIP().toString().c_str(), OTA_PASSWORD);
+}
+
+void wifi_ota_handle(void)
+{
+    if (WiFi.status() == WL_CONNECTED) {
+        ArduinoOTA.handle();
+    }
+}
+
+bool wifi_ota_is_connected(void)
+{
+    return WiFi.status() == WL_CONNECTED;
+}
+
+// ============================================================================
+// Screen timeout functions
+// ============================================================================
 
 static void reset_screen_timeout()
 {
@@ -50,6 +126,10 @@ static void screen_activity_monitor(lv_event_t * e)
 {
     reset_screen_timeout();
 }
+
+// ============================================================================
+// LVGL UI Functions
+// ============================================================================
 
 static void tutorial2_on_btn_clicked(lv_event_t * e)
 {
@@ -115,29 +195,17 @@ static void tutorial2_create_ui()
 
     // Add touch activity monitor to the screen for wake-on-touch
     lv_obj_add_event_cb(scr, screen_activity_monitor, LV_EVENT_PRESSED, NULL);
-
-    // Optional: show local IP if WiFi is enabled
-#if WIFI_ENABLED
-    if (WiFi.isConnected()) {
-        lv_obj_t * ip_label = lv_label_create(scr);
-        IPAddress ip = WiFi.localIP();
-        char buf[64];
-        snprintf(buf, sizeof(buf), "WiFi: %s\nIP: %u.%u.%u.%u",
-                 WIFI_SSID,
-                 (unsigned)ip[0], (unsigned)ip[1], (unsigned)ip[2], (unsigned)ip[3]);
-        lv_label_set_text(ip_label, buf);
-        lv_obj_set_style_text_color(ip_label, lv_color_hex(0x8EE5FF), 0);
-        lv_obj_align(ip_label, LV_ALIGN_TOP_LEFT, 8, 36);
-    }
-#endif
 }
+
+// ============================================================================
+// Arduino Setup and Loop
+// ============================================================================
 
 void setup()
 {
-    String title = "LVGL Tutorial 2";
-
     Serial.begin(115200);
-    Serial.println(title + " start");
+    Serial.println("\n=== LVGL Tutorial 2 + WiFi + OTA ===");
+    Serial.println();
 
     Serial.println("Initialize panel device");
     bsp_display_cfg_t cfg = {
@@ -157,29 +225,11 @@ void setup()
     bsp_display_start_with_config(&cfg);
     bsp_display_backlight_on();
 
-    // Optional: Connect WiFi and start OTA if available
-#if WIFI_ENABLED
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    Serial.printf("Connecting to WiFi: %s\n", WIFI_SSID);
-    uint32_t start = millis();
-    while (WiFi.status() != WL_CONNECTED && (millis() - start) < 15000) {
-        delay(250);
-        Serial.print('.');
+    // WiFi and OTA setup
+    wifi_ota_setup_wifi();
+    if (wifi_ota_is_connected()) {
+        wifi_ota_setup_ota();
     }
-    Serial.println();
-    if (WiFi.isConnected()) {
-        Serial.printf("WiFi connected, IP: %s\n", WiFi.localIP().toString().c_str());
-#if OTA_LIB_AVAILABLE
-        ArduinoOTA.setHostname(OTA_HOSTNAME);
-        ArduinoOTA.setPassword(OTA_PASSWORD);
-        ArduinoOTA.begin();
-        Serial.printf("OTA ready at %s (%s)\n", OTA_HOSTNAME, WiFi.localIP().toString().c_str());
-#endif
-    } else {
-        Serial.println("WiFi connect timeout; continuing without network.");
-    }
-#endif
 
     Serial.println("Create UI");
     bsp_display_lock(0);
@@ -190,11 +240,14 @@ void setup()
     last_activity_time = millis();
     Serial.printf("Screen timeout enabled: %d seconds\n", SCREEN_TIMEOUT_MS / 1000);
 
-    Serial.println(title + " end");
+    Serial.println("\n✓ System ready\n");
 }
 
 void loop()
 {
+    // Handle OTA updates
+    wifi_ota_handle();
+
     // Check screen timeout
     if (screen_is_on && (millis() - last_activity_time > SCREEN_TIMEOUT_MS)) {
         bsp_display_backlight_off();
@@ -202,9 +255,5 @@ void loop()
         Serial.println("Screen sleep: timeout reached");
     }
 
-    // Handle OTA when available; otherwise simple idle loop
-#if WIFI_ENABLED && OTA_LIB_AVAILABLE
-    ArduinoOTA.handle();
-#endif
-    delay(50);
+    delay(10);
 }
