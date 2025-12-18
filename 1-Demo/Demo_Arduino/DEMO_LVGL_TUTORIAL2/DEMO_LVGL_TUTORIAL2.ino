@@ -31,6 +31,26 @@
  */
 #define LVGL_PORT_ROTATION_DEGREE (90)
 
+// Screen sleep/wake settings
+#define SCREEN_TIMEOUT_MS 30000  // 30 seconds of inactivity
+static uint32_t last_activity_time = 0;
+static bool screen_is_on = true;
+
+static void reset_screen_timeout()
+{
+    last_activity_time = millis();
+    if (!screen_is_on) {
+        bsp_display_backlight_on();
+        screen_is_on = true;
+        Serial.println("Screen wake: touch detected");
+    }
+}
+
+static void screen_activity_monitor(lv_event_t * e)
+{
+    reset_screen_timeout();
+}
+
 static void tutorial2_on_btn_clicked(lv_event_t * e)
 {
     lv_obj_t * label = (lv_obj_t *)lv_event_get_user_data(e);
@@ -38,6 +58,7 @@ static void tutorial2_on_btn_clicked(lv_event_t * e)
     static uint32_t clicks = 0;
     clicks++;
     lv_label_set_text_fmt(label, "Button clicked: %lu", (unsigned long)clicks);
+    reset_screen_timeout();
 }
 
 static void tutorial2_on_slider_changed(lv_event_t * e)
@@ -47,6 +68,7 @@ static void tutorial2_on_slider_changed(lv_event_t * e)
     lv_obj_t * slider = lv_event_get_target(e);
     int32_t val = lv_slider_get_value(slider);
     lv_label_set_text_fmt(label, "Brightness: %d%%", (int)val);
+    reset_screen_timeout();
 }
 
 static void tutorial2_create_ui()
@@ -90,6 +112,10 @@ static void tutorial2_create_ui()
     lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_TOP_MID, 0, -10);
 
     lv_obj_add_event_cb(slider, tutorial2_on_slider_changed, LV_EVENT_VALUE_CHANGED, slider_label);
+
+    // Add touch activity monitor to the screen for wake-on-touch
+    lv_obj_add_event_cb(scr, screen_activity_monitor, LV_EVENT_PRESSED, NULL);
+
     // Optional: show local IP if WiFi is enabled
 #if WIFI_ENABLED
     if (WiFi.isConnected()) {
@@ -160,11 +186,22 @@ void setup()
     tutorial2_create_ui();
     bsp_display_unlock();
 
+    // Initialize screen timeout
+    last_activity_time = millis();
+    Serial.printf("Screen timeout enabled: %d seconds\n", SCREEN_TIMEOUT_MS / 1000);
+
     Serial.println(title + " end");
 }
 
 void loop()
 {
+    // Check screen timeout
+    if (screen_is_on && (millis() - last_activity_time > SCREEN_TIMEOUT_MS)) {
+        bsp_display_backlight_off();
+        screen_is_on = false;
+        Serial.println("Screen sleep: timeout reached");
+    }
+
     // Handle OTA when available; otherwise simple idle loop
 #if WIFI_ENABLED && OTA_LIB_AVAILABLE
     ArduinoOTA.handle();
