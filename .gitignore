@@ -1,0 +1,72 @@
+# JC3248W535EN - Git Ignore File
+
+# ==============================================
+# Large Libraries (Users should install these via Arduino Library Manager)
+# ==============================================
+1-Demo/Demo_Arduino/libraries/lvgl/
+1-Demo/Demo_Arduino/libraries/ESP32_JPEG/
+1-Demo/Demo_Arduino/libraries/ESP32-audioI2S-3.0.12/
+1-Demo/Demo_Arduino/libraries/JPEGDEC-1.6.1/
+
+# Keep only readme to indicate what's needed
+!1-Demo/Demo_Arduino/libraries/readme.txt
+
+# ==============================================
+# Media/Demo Files (Users can use their own)
+# ==============================================
+1-Demo/Demo_Arduino/TF file/
+
+# Large JSON data file
+1-Demo/city.list.json
+
+# ==============================================
+# Tools & Binaries (Download from official sources)
+# ==============================================
+8-Burn operation/
+7-Character&Picture_Molding_Tool/
+6-User_Manual/
+4-Driver_IC_Data_Sheet/
+
+# ==============================================
+# Build Artifacts
+# ==============================================
+**/build/
+**/bin/
+**/*.bin
+**/*.elf
+**/*.hex
+**/*.map
+
+# ==============================================
+# Arduino/Platform IO
+# ==============================================
+.pio/
+.vscode/
+.clang_complete
+.gcc-flags.json
+
+# ==============================================
+# OS Files
+# ==============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+
+# ==============================================
+# IDE Files
+# ==============================================
+*.swp
+*.swo
+*.bak
+*.tmp
+*.log
+
+# ==============================================
+# Git Analysis (temporary file)
+# ==============================================
+GIT_ANALYSIS.md
