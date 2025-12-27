@@ -4,9 +4,37 @@ Complete development package for ESP32-S3 board with 3.5" IPS capacitive touch s
 
 ## 🎯 Project Status
 
-**Last Updated:** December 18, 2025
+**Last Updated:** December 27, 2025
 
-### ✅ Tutorial 1: Completed (100%)
+### ✨ ESPHome Integration: Fully Deployed ⭐ NEW
+
+**Folder:** `9-esphome/` - Modern ESPHome framework with LVGL support
+- ✅ ESPHome 2025.12.2 installed and operational
+- ✅ Native QSPI/DBI display support (AXS15231 controller)
+- ✅ I2C capacitive touchscreen driver integrated
+- ✅ LVGL graphics framework with custom pages
+- ✅ WiFi connectivity established (TP-Link_AE29)
+- ✅ OTA firmware updates enabled
+- ✅ Firmware compiled and deployed to device
+- ✅ Touch input verified and responding
+
+**Status:** ✅ Running on physical device with full functionality
+
+**Quick Start ESPHome:**
+```bash
+cd 9-esphome/
+cp secrets.yaml.example secrets.yaml
+# Edit secrets.yaml with your WiFi credentials
+esphome run jc3248w535-native-qspi_dbi.yaml
+```
+
+**Deployment Stats:**
+- Compilation: 2m 29s | Binary: ~1MB | Method: USB JTAG
+- Baud rate: 921600 | Device: /dev/cu.usbmodem2101
+
+---
+
+### ✅ Tutorial 1: Completed (100%) - Arduino Framework
 
 **Environment Setup:**
 - ✅ Arduino IDE 2.3.7 configured
@@ -141,6 +169,23 @@ Component datasheets:
 - **flash_download_tool_3.9.3**: Official Espressif tool for flashing firmware
 - **Burn files**: Pre-compiled binary files ready to flash
 - **Burn operation instructions**: Flashing instructions
+
+### 9-esphome/
+
+**ESPHome Framework** - Modern YAML-based firmware development:
+- `jc3248w535-native-qspi_dbi.yaml`: Main ESPHome configuration with LVGL support
+- `secrets.yaml.example`: WiFi credentials template (copy and edit for your network)
+- `install_esphome.sh`: Installation script for ESPHome setup
+- `README.md`: Detailed ESPHome documentation
+- `QUICK_START.md`: Quick start guide for ESPHome deployment
+- `CONFIGURACION.md`: Configuration details in Spanish
+
+**Features:**
+- Native QSPI/DBI display driver (AXS15231)
+- I2C capacitive touchscreen support
+- LVGL graphics framework integrated
+- WiFi and OTA updates enabled
+- 921600 baud serial communication
 
 ---
 
